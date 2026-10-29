@@ -70,3 +70,25 @@ test('public proxy blocks direct loopback requests',async()=>{
  try{const response=await new Promise((resolve,reject)=>{http.get(proxy.server,{path:'http://127.0.0.1:80/'},r=>{r.resume();resolve(r.statusCode)}).on('error',reject)});assert.equal(response,403)}
  finally{proxy.close()}
 });
+
+
+test('EdgeOne frontend preserves preview authentication on same-origin capture requests',async()=>{
+ const browser=await launch();try{
+  const page=await browser.newPage();
+  const html=await fs.readFile(new URL('../edgeone-api/index.html',import.meta.url),'utf8');
+  const requested=[];
+  await page.route('https://designbreakdown-api-sxuxrgqg.edgeone.cool/**',async route=>{
+   const u=new URL(route.request().url());
+   if(u.pathname==='/api/analyze'){
+    requested.push(u);await route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:'fixture capture reached'})});
+   }else await route.fulfill({status:200,contentType:'text/html',body:html});
+  });
+  await page.goto('https://designbreakdown-api-sxuxrgqg.edgeone.cool/?eo_token=test-token&eo_time=123');
+  await page.getByLabel('网页地址',{exact:true}).fill('https://example.com');
+  await page.getByRole('button',{name:'开始拆解',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'fixture capture reached'}).waitFor();
+  assert.equal(requested.length,1);
+  assert.equal(requested[0].searchParams.get('eo_token'),'test-token');
+  assert.equal(requested[0].searchParams.get('eo_time'),'123');
+ }finally{await browser.close()}
+});
