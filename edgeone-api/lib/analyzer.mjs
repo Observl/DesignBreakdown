@@ -31,15 +31,10 @@ export async function analyze(raw) {
       if(!data.fragments.length)throw new Error('页面已加载，但没有识别到可展示的设计区域。页面可能需要登录或仍未渲染。');
       const height=Math.max(1,data.pageHeight);
       const screenshot=await page.screenshot({type:'jpeg',quality:42,clip:{x:0,y:0,width:1365,height},timeout:15000,animations:'disabled'});
-      const fragments=[];
       const batchId=Date.now();
-      for(let i=0;i<data.fragments.length;i++){
-        const f=data.fragments[i];const clip={x:f.rect.x,y:f.rect.y,width:Math.min(f.rect.width,1365-f.rect.x),height:Math.min(f.rect.height,height-f.rect.y)};
-        if(clip.width<1||clip.height<1)continue;
-        try{const image=await page.screenshot({type:'jpeg',quality:42,clip,timeout:5000,animations:'disabled'});fragments.push({...f,id:batchId+i,image:'data:image/jpeg;base64,'+image.toString('base64'),source:page.url(),capturedAt:new Date().toISOString()})}catch{}
-      }
-      if(!fragments.length)throw new Error('设计区域截图失败，请尝试其他网页。');
-      return {source:page.url(),title:data.title,width:1365,height,capturedAt:new Date().toISOString(),screenshot:'data:image/jpeg;base64,'+screenshot.toString('base64'),fragments,method:'DOM 与计算样式规则识别；不包含 AI 审美评价、悬停验证或动效录制。',truncated:data.pageHeight>=14000};
+      const fragments=data.fragments.filter(f=>f.rect.width>0&&f.rect.height>0&&f.rect.y<height).map((f,i)=>({...f,id:batchId+i,image:'',source:page.url(),capturedAt:new Date().toISOString()}));
+      if(!fragments.length)throw new Error('未找到有效设计区域。');
+      return {source:page.url(),title:data.title,cropOnClient:true,width:1365,height,capturedAt:new Date().toISOString(),screenshot:'data:image/jpeg;base64,'+screenshot.toString('base64'),fragments,method:'DOM 与计算样式规则识别；不包含 AI 审美评价、悬停验证或动效录制。',truncated:data.pageHeight>=14000};
     })();
     const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('抓取超时，请尝试内容更少的页面。')),85000)});
     return await Promise.race([work,timeout]);

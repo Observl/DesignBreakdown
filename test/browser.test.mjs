@@ -21,6 +21,7 @@ test('extract rendered regions, styles, screenshots and preserve collections acr
   async function payload(){const screenshot=await source.screenshot({type:'jpeg'});return {...extracted,source:'https://example.com',height:900,width:1365,screenshot:'data:image/jpeg;base64,'+screenshot.toString('base64'),method:'测试样本的真实 DOM 提取',fragments:await Promise.all(extracted.fragments.map(async(f,i)=>({...f,id:batch+i,capturedAt:'2026-10-29',source:'https://example.com',image:'data:image/jpeg;base64,'+(await source.screenshot({type:'jpeg',clip:f.rect})).toString('base64')})))}}
   const first=await payload();batch=2000;const second=await payload();
   first.fragments[0].name='<img src=x onerror=alert(1)>真实标题';
+  first.fragments[0].image=''; // EdgeOne returns the full screenshot and crop rectangles.
   let calls=0;
   const html=await fs.readFile(new URL('../index.html',import.meta.url),'utf8');
   server=http.createServer((req,res)=>{if(req.url==='/api/analyze'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(calls++?second:first))}else{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html)}});
