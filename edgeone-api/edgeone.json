@@ -1,0 +1,12 @@
+{
+  "name": "designbreakdown-api",
+  "cloudFunctions": {
+    "nodejs": {
+      "maxDuration": 120,
+      "externalNodeModules": [
+        "playwright-core",
+        "@sparticuz/chromium"
+      ]
+    }
+  }
+}

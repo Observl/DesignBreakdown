@@ -4,3 +4,5 @@ output/
 outputs/
 *.tar.gz
 .env
+.tools/
+.edgeone/

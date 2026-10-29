@@ -1,0 +1,1 @@
+export function onRequestGet({request}){const origin=request.headers.get('origin');return new Response(JSON.stringify({ok:true,service:'designbreakdown',version:3,platform:'edgeone'}),{headers:{'Content-Type':'application/json','Cache-Control':'no-store',...(origin==='https://observl.github.io'?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{})}})}
