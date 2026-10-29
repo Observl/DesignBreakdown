@@ -1,0 +1,6 @@
+.git
+node_modules
+.openai
+_site
+outputs
+*.tar.gz

@@ -1,0 +1,21 @@
+name: Test real extraction and collections
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - server/**
+      - test/**
+      - package.json
+      - .github/workflows/test.yml
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.58.2-noble
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install
+      - run: npm test

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: designbreakdown-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ALLOWED_ORIGIN
+        value: https://observl.github.io
+      - key: MAX_CONCURRENT
+        value: "1"
+      - key: PORT
+        value: "10000"
