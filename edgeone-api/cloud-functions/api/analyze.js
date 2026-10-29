@@ -1,6 +1,6 @@
 import {analyze} from '../../lib/analyzer.mjs';
 let active=0;
-const allowed=['https://observl.github.io'];
+const allowed=['https://observl.github.io','https://designbreakdown-api-sxuxrgqg.edgeone.cool'];
 function reply(request,status,data){const origin=request.headers.get('origin');const same=origin===new URL(request.url).origin;return new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...((same||allowed.includes(origin))?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{})}})}
 export async function onRequest({request}){
 const origin=request.headers.get('origin');
