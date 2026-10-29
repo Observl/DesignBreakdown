@@ -1,3 +1,5 @@
+import {runWorkflow, workflowContract} from './workflow.mjs';
+import {filterCandidates} from './workflow-adapter.mjs';
 import http from 'node:http';
 import fs from 'node:fs/promises';
 import {chromium} from 'playwright';
@@ -57,6 +59,7 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='OPTIONS'){res.writeHead(204,{...(allowed.includes(origin)?{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'POST, GET, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Vary':'Origin'}:{})});return res.end()}
   if(req.url==='/health')return send(res,200,{ok:true,service:'designbreakdown',version:2},origin);
   if(req.url==='/'&&req.method==='GET'){try{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await fs.readFile(new URL('../index.html',import.meta.url)))}catch{send(res,404,{error:'首页不存在'},origin)}return}
+  if(req.url==='/api/workflow'&&req.method==='GET')return send(res,200,workflowContract,origin);
   if(req.url!=='/api/analyze'||req.method!=='POST')return send(res,404,{error:'接口不存在'},origin);
   if(origin&&!allowed.includes(origin))return send(res,403,{error:'当前来源未获允许。'},origin);
   const ip=req.socket.remoteAddress,now=Date.now();
@@ -64,9 +67,10 @@ const server=http.createServer(async(req,res)=>{
   if(active>=maxConcurrent)return send(res,429,{error:'抓取服务正忙，请稍后重试。'},origin);
   if(recent.has(ip)&&now-recent.get(ip)<5000)return send(res,429,{error:'请求过于频繁，请稍后重试。'},origin);
   active++;recent.set(ip,now);
-  try{const {url}=await readJson(req);const result=await analyze(url);send(res,200,result,origin)}
+  try{const {url,workflow='default'}=await readJson(req);if(!['default','ai'].includes(workflow))return send(res,400,{error:'workflow must be default or ai'},origin);const result=await analyze(url);send(res,200,await runWorkflow(result,{mode:workflow,adapter:filterCandidates}),origin)}
   catch(e){console.error('Analysis failed:',e.message);send(res,422,{error:e.message?.includes('net::')?'目标网页无法连接或拒绝自动访问，请尝试其他公开网址。':e.message||'抓取失败。'},origin)}
   finally{active--}
 });
 server.requestTimeout=100000;server.headersTimeout=10000;
 server.listen(port,'0.0.0.0',()=>console.log('DesignBreakdown listening on '+port));
+

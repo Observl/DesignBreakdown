@@ -1,3 +1,5 @@
+import {runWorkflow} from '../../lib/workflow.mjs';
+import {filterCandidates} from '../../lib/workflow-adapter.mjs';
 import {analyze} from '../../lib/analyzer.mjs';
 let active=0;
 const allowed=['https://observl.github.io','https://designbreakdown-api-sxuxrgqg.edgeone.cool'];
@@ -9,7 +11,8 @@ if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'Acc
 if(request.method!=='POST')return reply(request,405,{error:'请使用 POST 请求。'});
 if(active)return reply(request,429,{error:'抓取服务正忙，请稍后重试。'});
 active++;
-try{if(Number(request.headers.get('content-length'))>4096)return reply(request,413,{error:'请求过长。'});const body=await request.text();if(body.length>4096)return reply(request,413,{error:'请求过长。'});let input;try{input=JSON.parse(body)}catch{return reply(request,400,{error:'JSON 格式错误。'})}return reply(request,200,await analyze(input.url))}
+try{if(Number(request.headers.get('content-length'))>4096)return reply(request,413,{error:'请求过长。'});const body=await request.text();if(body.length>4096)return reply(request,413,{error:'请求过长。'});let input;try{input=JSON.parse(body)}catch{return reply(request,400,{error:'JSON 格式错误。'})}if(!['default','ai'].includes(input.workflow??'default'))return reply(request,400,{error:'workflow must be default or ai'});return reply(request,200,await runWorkflow(await analyze(input.url),{mode:input.workflow??'default',adapter:filterCandidates}))}
 catch(error){console.error('Capture failed:',error.message);return reply(request,422,{error:error.message||'网页抓取失败。'})}
 finally{active--}
 }
+
