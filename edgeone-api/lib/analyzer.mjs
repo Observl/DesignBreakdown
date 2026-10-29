@@ -30,7 +30,8 @@ export async function analyze(raw) {
       if(/verify you are human|checking your browser|just a moment|access denied|captcha/i.test(text.slice(0,1800))&&data.fragments.length<3)throw new Error('目标网站要求人机验证或限制自动访问，无法完成抓取。');
       if(!data.fragments.length)throw new Error('页面已加载，但没有识别到可展示的设计区域。页面可能需要登录或仍未渲染。');
       const height=Math.max(1,data.pageHeight);
-      const screenshot=await page.screenshot({type:'jpeg',quality:42,clip:{x:0,y:0,width:1365,height},timeout:15000,animations:'disabled'});
+      await page.evaluate(()=>{if(document.documentElement.scrollHeight>14000){for(const el of [document.documentElement,document.body]){el.style.height='14000px';el.style.maxHeight='14000px';el.style.overflow='hidden'}}});
+      const screenshot=await page.screenshot({type:'jpeg',quality:42,fullPage:true,timeout:15000,animations:'disabled'});
       const batchId=Date.now();
       const fragments=data.fragments.filter(f=>f.rect.width>0&&f.rect.height>0&&f.rect.y<height).map((f,i)=>({...f,id:batchId+i,image:'',source:page.url(),capturedAt:new Date().toISOString()}));
       if(!fragments.length)throw new Error('未找到有效设计区域。');

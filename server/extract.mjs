@@ -6,7 +6,7 @@ export function extractDesigns() {
   const seen=new Set(),results=[];
   for(const el of candidates) {
     const box=el.getBoundingClientRect(),s=getComputedStyle(el);
-    if(box.width<60||box.height<24||box.width>viewport+20||box.bottom<0||box.top+scrollY>14000||s.display==='none'||s.visibility==='hidden'||Number(s.opacity)===0)continue;
+    if(box.right<=0||box.left>=viewport||box.width<60||box.height<24||box.width>viewport+20||box.bottom<0||box.top+scrollY>14000||s.display==='none'||s.visibility==='hidden'||Number(s.opacity)===0)continue;
     const tag=el.tagName.toLowerCase(),label=text(el),size=parseFloat(s.fontSize);
     let type='',score=0,reasons=[],tags=[];
     const images=el.querySelectorAll('img,picture,video,svg').length;
@@ -26,7 +26,7 @@ export function extractDesigns() {
     const key=[Math.round(box.x/12),Math.round((box.y+scrollY)/12),Math.round(box.width/12),Math.round(box.height/12)].join(':');
     if(seen.has(key))continue;seen.add(key);
     const heading=el.matches('h1,h2')?label:text(el.querySelector('h1,h2,h3')||el);
-    results.push({name:(heading||({'导航':'网页导航','组件':'图文组件','布局':'内容布局','交互':'交互控件','排版':'标题排版'})[type]).slice(0,45),type,score,desc:reasons.slice(0,4).join('；')+'。',tags:[...new Set(tags)].slice(0,5),rect:{x:Math.max(0,Math.round(box.x)),y:Math.max(0,Math.round(box.y+scrollY)),width:Math.round(box.width),height:Math.min(Math.round(box.height),1200)},style:{font:s.fontFamily,fontSize:s.fontSize,color:s.color,background:s.backgroundColor,radius:s.borderRadius,display:s.display},text:label});
+    results.push({name:(heading||({'导航':'网页导航','组件':'图文组件','布局':'内容布局','交互':'交互控件','排版':'标题排版'})[type]).slice(0,45),type,score,desc:reasons.slice(0,4).join('；')+'。',tags:[...new Set(tags)].slice(0,5),rect:{x:Math.max(0,Math.round(box.x)),y:Math.max(0,Math.round(box.y+scrollY)),width:Math.max(1,Math.round(Math.min(box.right,viewport)-Math.max(box.left,0))),height:Math.min(Math.round(box.height),1200)},style:{font:s.fontFamily,fontSize:s.fontSize,color:s.color,background:s.backgroundColor,radius:s.borderRadius,display:s.display},text:label});
   }
   const picked=[];
   for(const c of results.sort((a,b)=>b.score-a.score)) {

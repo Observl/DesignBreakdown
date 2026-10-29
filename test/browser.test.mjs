@@ -13,6 +13,9 @@ test('extract rendered regions, styles, screenshots and preserve collections acr
   const source=await browser.newPage({viewport:{width:1365,height:900}});
   await source.setContent(fixture);
   const extracted=await source.evaluate(extractDesigns);
+  await source.evaluate(()=>{const el=document.createElement('article');el.textContent='Offscreen carousel';el.style.cssText='position:absolute;left:1800px;top:100px;width:250px;height:200px';document.body.append(el)});
+  const withOffscreen=await source.evaluate(extractDesigns);
+  assert.ok(withOffscreen.fragments.every(f=>f.rect.x<1365&&f.rect.x+f.rect.width<=1365),'exclude horizontal offscreen carousel regions');
   assert.equal(extracted.title,'真实结构测试页');
   assert.ok(extracted.fragments.some(f=>f.type==='导航'));
   assert.ok(extracted.fragments.some(f=>f.type==='排版'&&f.style.fontSize==='64px'));
